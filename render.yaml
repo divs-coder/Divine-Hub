@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: divinehub-server
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: JWT_SECRET
+        value: divinehub-production-secret-change-me
+      - key: MONGODB_URI
+        value: mongodb+srv://Divine-Hub:UwZt0CTcsevCpSgw@buildmycitydb.s81q3vh.mongodb.net/?appName=BuildMyCityDB
+      - key: CLIENT_URL
+        value: https://divine-hub-client.vercel.app
+      - key: UPLOAD_DIR
+        value: server/uploads
+      - key: MAX_FILE_SIZE
+        value: 52428800

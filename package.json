@@ -19,7 +19,8 @@
     "start:server": "npm --prefix server start",
     "check:server": "npm --prefix server run check",
     "test": "npm --prefix server test",
-    "test:run": "npm --prefix server run test:run"
+    "test:run": "npm --prefix server run test:run",
+    "deploy": "npm run build && git add . && git commit -m \"Build for deploy\" && git push"
   },
   "devDependencies": {
     "concurrently": "^9.2.4"
