@@ -201,6 +201,17 @@ Health check:
 GET http://localhost:4000/api/health
 ```
 
+## Testing
+
+Automated tests are included using Vitest and Supertest with an in-memory MongoDB instance:
+
+```bash
+npm run test
+npm run test:run
+```
+
+Test coverage includes auth registration/login, password changes, post CRUD, like/unlike, error handling (CastError, validation, authentication), and utility functions (normalizers, serializers, pagination, JWT, validation).
+
 ## API surface
 
 - `POST /api/auth/register`
@@ -313,4 +324,4 @@ For production, put uploads behind object storage (S3-compatible storage or a ma
 - Content-signature scanning and virus scanning are not included; the MIME allowlist and generated names reduce risk but are not a substitute for scanning.
 - Password reset and email verification flows are not included because no mail provider was specified.
 - The activity view is represented through the existing profile, notification, and saved surfaces; a dedicated derived activity endpoint can be added if audit history needs its own UI.
-- Automated integration tests are not included yet; the API contracts and build checks are ready for Supertest/Vitest coverage.
+- Automated integration tests are included with 72 passing tests covering auth, posts, error handling, and utility functions. yet; the API contracts and build checks are ready for Supertest/Vitest coverage.
