@@ -1,0 +1,3 @@
+export default function ProfileStats({ user }) {
+  return <dl className="grid grid-cols-3 border-y border-[var(--dh-border)] py-4 text-center sm:max-w-md sm:text-left"><div className="border-r border-[var(--dh-border)] pr-3 sm:pl-1"><dt className="meta">Posts</dt><dd className="mt-1 text-lg font-semibold tabular-nums">{user.postsCount ?? '—'}</dd></div><div className="border-r border-[var(--dh-border)] px-3 sm:px-5"><dt className="meta">Followers</dt><dd className="mt-1 text-lg font-semibold tabular-nums">{user.followersCount ?? 0}</dd></div><div className="pl-3 sm:pl-5"><dt className="meta">Following</dt><dd className="mt-1 text-lg font-semibold tabular-nums">{user.followingCount ?? 0}</dd></div></dl>
+}

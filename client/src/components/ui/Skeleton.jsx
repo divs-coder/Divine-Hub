@@ -1,0 +1,1 @@
+export default function Skeleton({ className = '' }) { return <span className={`block animate-pulse rounded-md bg-[color-mix(in_srgb,var(--dh-muted)_16%,transparent)] ${className}`} aria-hidden="true" /> }

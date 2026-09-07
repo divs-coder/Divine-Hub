@@ -1,0 +1,3 @@
+export default function DivineHubMark({ compact = false, light = false }) {
+  return <div className={`flex items-center gap-2 ${light ? 'text-[var(--dh-surface)]' : 'text-[var(--dh-text)]'}`}><svg width={compact ? 32 : 40} height={compact ? 32 : 40} viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M12 8.5c10.8-3 20 3.4 20 11.5s-9.2 14.5-20 11.5" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" /><path d="M20 8.5c10.8-3 20 3.4 20 11.5S30.8 34.5 20 31.5" stroke="var(--dh-primary-soft)" strokeWidth="2.6" strokeLinecap="round" strokeDasharray="13 8" /></svg>{!compact && <span className="text-lg font-semibold tracking-[-.02em]">DivineHub</span>}</div>
+}

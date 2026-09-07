@@ -1,0 +1,27 @@
+{
+  "name": "divinehub",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "install:all": "npm install --prefix client && npm install --prefix server",
+    "dev": "concurrently --kill-others-on-fail -n client,server -c magenta,cyan \"npm run dev:client\" \"npm run dev:server\"",
+    "db:up": "docker compose up -d mongodb",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f mongodb",
+    "db:status": "docker compose ps mongodb",
+    "dev:client": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev",
+    "build": "npm --prefix client run build",
+    "start:server": "npm --prefix server start",
+    "check:server": "npm --prefix server run check",
+    "test": "npm --prefix server test",
+    "test:run": "npm --prefix server run test:run"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}

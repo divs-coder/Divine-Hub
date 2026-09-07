@@ -1,0 +1,8 @@
+import { FileVideo, Image as ImageIcon, X } from 'lucide-react'
+import IconButton from '../ui/IconButton.jsx'
+
+export default function UploadTray({ file, preview, progress, error, onRemove }) {
+  if (!file) return null
+  const video = file.type.startsWith('video/')
+  return <div className="mt-3 flex gap-3 rounded-card border border-[var(--dh-border)] bg-[var(--dh-courtyard)] p-3"><div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-media bg-[var(--dh-ink-950)]">{preview && (video ? <video className="h-full w-full object-cover" src={preview} muted /> : <img className="h-full w-full object-cover" src={preview} alt="Selected upload preview" />)}<span className="absolute bottom-1 left-1 rounded bg-black/60 p-1 text-white">{video ? <FileVideo size={13} /> : <ImageIcon size={13} />}</span></div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><div className="min-w-0"><p className="truncate text-sm font-medium">{file.name}</p><p className="meta">{(file.size / 1024 / 1024).toFixed(1)} MB · {video ? 'Video' : 'Image'}</p></div><IconButton label="Remove media" onClick={onRemove}><X size={16} /></IconButton></div>{progress !== null && <div className="mt-4"><div className="mb-1 flex justify-between text-xs text-[var(--dh-muted)]"><span>Uploading</span><span>{progress}%</span></div><div className="h-1.5 overflow-hidden rounded-full bg-[var(--dh-border)]"><div className="h-full rounded-full bg-[var(--dh-primary)] transition-[width]" style={{ width: `${progress}%` }} /></div></div>}{error && <p className="mt-2 text-xs text-[var(--dh-liked)]" role="alert">{error}</p>}</div></div>
+}

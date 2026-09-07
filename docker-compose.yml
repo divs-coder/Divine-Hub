@@ -1,0 +1,23 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: divinehub-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: divinehub
+    volumes:
+      - divinehub_mongodb_data:/data/db
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mongosh --quiet --eval "db.adminCommand({ ping: 1 }).ok" | grep 1
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  divinehub_mongodb_data:
+    name: divinehub-mongodb-data

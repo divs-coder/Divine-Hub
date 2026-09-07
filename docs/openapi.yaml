@@ -1,0 +1,524 @@
+openapi: 3.1.0
+info:
+  title: DivineHub Authentication API
+  version: 1.0.0
+  license:
+    name: Proprietary
+    identifier: proprietary
+  description: |
+    OpenAPI contract for DivineHub registration, login, session restoration,
+    password changes, and logout. Authentication uses JWT bearer access tokens.
+servers:
+  - url: http://localhost:4000/api
+    description: Local development
+
+tags:
+  - name: Authentication
+    description: Account registration and authenticated session management
+
+paths:
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register an account
+      description: Creates a user, hashes the password, and returns a JWT access token.
+      operationId: registerAccount
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              fullName: Ada Lovelace
+              username: ada_lovelace
+              email: ada@example.com
+              phoneNumber: '+1 555 010 0200'
+              password: a-long-password
+      responses:
+        '201':
+          description: Account created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          description: Email or username is already registered.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                emailExists:
+                  summary: Existing email
+                  value:
+                    success: false
+                    message: Email already exists
+                    code: EMAIL_EXISTS
+                    fieldErrors:
+                      email: Email already exists
+                usernameExists:
+                  summary: Existing username
+                  value:
+                    success: false
+                    message: Username already exists
+                    code: USERNAME_EXISTS
+                    fieldErrors:
+                      username: Username already exists
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/DatabaseUnavailable'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Log in
+      description: Authenticates with an email address or username and returns a JWT access token.
+      operationId: loginAccount
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              email:
+                summary: Login by email
+                value:
+                  identifier: ada@example.com
+                  password: a-long-password
+              username:
+                summary: Login by username
+                value:
+                  identifier: ada_lovelace
+                  password: a-long-password
+      responses:
+        '200':
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthenticationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          description: The identifier or password is invalid.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                message: Invalid credentials
+                code: INVALID_CREDENTIALS
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '503':
+          $ref: '#/components/responses/DatabaseUnavailable'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /auth/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get the current user
+      description: Restores the authenticated session and returns the user associated with the bearer token.
+      operationId: getCurrentUser
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user returned.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/DatabaseUnavailable'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /auth/password:
+    put:
+      tags:
+        - Authentication
+      summary: Change the current password
+      description: Replaces the current password after verifying the existing password.
+      operationId: changePassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+            example:
+              currentPassword: a-long-password
+              newPassword: an-even-longer-password
+      responses:
+        '200':
+          description: Password changed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+              example:
+                success: true
+                message: Password changed
+        '400':
+          description: Missing fields, invalid new password, or incorrect current password.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                validation:
+                  summary: Missing or too-short password
+                  value:
+                    success: false
+                    message: Missing required fields
+                    code: VALIDATION_ERROR
+                    fieldErrors:
+                      currentPassword: Current password is required
+                      newPassword: Use at least 8 characters
+                invalidPassword:
+                  summary: Incorrect current password
+                  value:
+                    success: false
+                    message: Current password is incorrect
+                    code: INVALID_PASSWORD
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/DatabaseUnavailable'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Log out
+      description: Validates the current bearer token and ends the server-side request session. The client must also remove its locally stored token.
+      operationId: logoutAccount
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Logout accepted. The response has no body.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '503':
+          $ref: '#/components/responses/DatabaseUnavailable'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT returned by the register or login endpoint.
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required:
+        - fullName
+        - username
+        - email
+        - phoneNumber
+        - password
+      properties:
+        fullName:
+          type: string
+          minLength: 2
+          maxLength: 80
+          description: Display name.
+        username:
+          type: string
+          minLength: 3
+          maxLength: 24
+          pattern: '^[a-z0-9_]{3,24}$'
+          description: Lowercase username containing letters, numbers, or underscores.
+        email:
+          type: string
+          format: email
+        phoneNumber:
+          type: string
+          pattern: '^\+?[0-9 ()-]{7,20}$'
+        password:
+          type: string
+          format: password
+          minLength: 8
+
+    LoginRequest:
+      type: object
+      required:
+        - identifier
+        - password
+      properties:
+        identifier:
+          type: string
+          minLength: 1
+          description: Account email address or username.
+        password:
+          type: string
+          format: password
+          minLength: 1
+
+    PasswordChangeRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          format: password
+          minLength: 1
+        newPassword:
+          type: string
+          format: password
+          minLength: 8
+
+    AuthenticatedUser:
+      type: object
+      required:
+        - id
+        - fullName
+        - username
+        - email
+        - phoneNumber
+        - profilePicture
+        - bio
+        - followersCount
+        - followingCount
+        - postsCount
+        - relationship
+        - accountVisibility
+        - messagePermission
+        - themePreference
+        - isOnline
+        - lastSeen
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          description: MongoDB ObjectId serialized as a string.
+        fullName:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        phoneNumber:
+          type: string
+        profilePicture:
+          type: [string, 'null']
+          format: uri
+        bio:
+          type: string
+        followersCount:
+          type: integer
+          minimum: 0
+        followingCount:
+          type: integer
+          minimum: 0
+        postsCount:
+          type: integer
+          minimum: 0
+        relationship:
+          type: string
+          enum:
+            - self
+            - following
+            - not-following
+        accountVisibility:
+          type: string
+          enum:
+            - public
+            - private
+        messagePermission:
+          type: string
+          enum:
+            - everyone
+            - followers
+            - nobody
+        themePreference:
+          type: string
+          enum:
+            - light
+            - dark
+            - system
+        isOnline:
+          type: boolean
+        lastSeen:
+          type: [string, 'null']
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    AuthenticationData:
+      type: object
+      required:
+        - user
+        - token
+      properties:
+        user:
+          $ref: '#/components/schemas/AuthenticatedUser'
+        token:
+          type: string
+          description: JWT access token.
+
+    AuthenticationResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          $ref: '#/components/schemas/AuthenticationData'
+
+    CurrentUserResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          const: true
+        data:
+          type: object
+          required:
+            - user
+          properties:
+            user:
+              $ref: '#/components/schemas/AuthenticatedUser'
+
+    MessageResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          const: true
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - message
+        - code
+      properties:
+        success:
+          type: boolean
+          const: false
+        message:
+          type: string
+        code:
+          type: string
+        fieldErrors:
+          type: object
+          additionalProperties:
+            type: string
+
+  responses:
+    ValidationError:
+      description: Request validation failed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Please check the highlighted fields
+            code: VALIDATION_ERROR
+            fieldErrors:
+              username: Use 3–24 lowercase letters, numbers, or underscores
+
+    Unauthorized:
+      description: Missing, expired, malformed, or invalid bearer token.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            missingToken:
+              summary: Missing authorization header
+              value:
+                success: false
+                message: Authentication required
+                code: UNAUTHORIZED
+            invalidToken:
+              summary: Invalid or expired token
+              value:
+                success: false
+                message: Invalid token
+                code: INVALID_TOKEN
+
+    DatabaseUnavailable:
+      description: MongoDB is not connected.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Database is unavailable. Start MongoDB or check MONGODB_URI, then try again.
+            code: DATABASE_UNAVAILABLE
+
+    RateLimited:
+      description: Authentication rate limit exceeded. The register and login routes allow 60 requests per 15-minute window.
+      headers:
+        RateLimit:
+          description: Standard rate-limit information when provided by the server.
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Too many authentication attempts. Try again later.
+            code: RATE_LIMITED
+
+    ServerError:
+      description: Unexpected server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            message: Something went wrong
+            code: SERVER_ERROR
